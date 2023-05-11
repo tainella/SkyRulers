@@ -6,6 +6,8 @@ Google Disk: https://drive.google.com/drive/folders/13tYZweA7svbKJyfORBHVDFs0c54
 
 Trello: https://trello.com/b/M6qpalEy/облако
 
+Notion: https://www.notion.so/be5dc2bbfd66463888958a456f96b8e7?pvs=4
+
 Видеодемонстрация: 
 
 ## Установка и запуск проекта
