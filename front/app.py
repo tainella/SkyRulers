@@ -20,7 +20,7 @@ app_ui = ui.page_fluid(ui.h1("Predictive calculation of engine parameters"),
                        ui.layout_sidebar(
                             ui.panel_sidebar(
                                 ui.input_selectize("type", "Engine type", type_of_engine),
-                                ui.input_selectize("parametr", "Parameter for rendering", parametr),
+                                ui.input_selectize("parametr_el", "Parameter for rendering", parametr),
                                 ui.input_radio_buttons("x3", "Flight phase", phase_of_flight)
                             ),
                             ui.panel_main(
@@ -32,37 +32,16 @@ app_ui = ui.page_fluid(ui.h1("Predictive calculation of engine parameters"),
 
 def server(input, output, session):
     
-    @output
-    @render.text
+    # Надо как-то получить имя самого файла для проверки на csv
+
     def file_content():
-        MAX_SIZE = 500000
-        file_infos = input.file1()
-        if not file_infos:
-            return
-
-        out_str = ""
-        for file_info in file_infos:
-            out_str += (
-                "=" * 47
-                + "\n"
-                + file_info["name"]
-                + "\nMIME type: "
-                #+ str(mimetypes.guess_type(file_info["name"])[0])
-            )
-            if file_info["size"] > MAX_SIZE:
-                out_str += f"\nTruncating at {MAX_SIZE} bytes."
-
-            out_str += "\n" + "=" * 47 + "\n"
-
-            if input.type() == "Text":
-                with open(file_info["datapath"], "r") as f:
-                    out_str += f.read(MAX_SIZE)
-            else:
-                with open(file_info["datapath"], "rb") as f:
-                    data = f.read(MAX_SIZE)
-                    #out_str += format_hexdump(data)
-
-        return out_str
+        file = input.file1()
+        if not file:
+            return 
+        if file[0]["type"] not in  ["text/csv", "xml"]:
+            return "Wrong file extension"
+        # if filename.ends_with()
+        return pd.read_csv(file[0]["datapath"])
     
     # НЕ могу победить координаты по осям
     @output
@@ -71,40 +50,58 @@ def server(input, output, session):
         print(input.date_range())
         return input.date_range()
     
-    # Не могу победить импорт названия параметра из списка в обозначение оси на графике
-    @output
-    @render.text
-    def parametr():
-        return f"parametr {input.parametr()}"
-
+    # Понять, как выбрать правильно значения параметра для графика из файла
     @output
     @render.plot
     def a_scatter_plot():
-        data = pd.DataFrame({'Original_data':[11, 17, 16, 18, 22, 25, 26, 24, 29], #исходные значения параметра
-        'Predicted_data':[5, 7, 7, 9, 12, 9, 9, 4, 8] #вычисленные значения параметра
-        })
+        df = file_content()
+        if isinstance(df, pd.DataFrame): 
+            if len(df.columns.to_list()) == 3:
+                pred = df['predictions']
+                true_val = df['true']
 
-        original_data = data["Original_data"]
-        predicted_data = data["Predicted_data"]
+                #time = time_scale() #шкала времени
 
-        #time = time_scale() #шкала времени
+                #add lines to plot
+                plt.plot(true_val, label='original_data', color='green')
+                plt.plot(pred, label='predicted_data', color='red')
 
-        #add lines to plot
-        plt.plot(original_data, label='original_data', color='green')
-        plt.plot(predicted_data, label='predicted_data', color='red')
+                # значения оси времени
+                # datelist = pd.date_range(time_scale()[0], time_scale()[1]).tolist()
+                # plt.xticks(datelist)
 
-        # значения оси времени
-        # datelist = pd.date_range(time_scale()[0], time_scale()[1]).tolist()
-        # plt.xticks(datelist)
+                #names of axes
+                plt.xlabel('time')
+                plt.ylabel(input.parametr_el())
 
-        #names of axes
-        plt.xlabel('time')
-        plt.ylabel("parametr")
+                #place legend on the plot
+                plt.legend( title='Metric') 
 
-        #place legend on the plot
-        plt.legend( title='Metric') 
+                #plt.show()
+                return plt.plot(true_val, label='original_data', color='green'), plt.plot(pred, label='predicted_data', color='red')
+            else:
+                pred = df['predictions']
 
-        #plt.show()
-        return plt.plot(original_data, label='original_data', color='green'), plt.plot(predicted_data, label='predicted_data', color='red')
+                #time = time_scale() #шкала времени
+
+                #add lines to plot
+                plt.plot(pred, label='predicted_data', color='green')
+
+                # значения оси времени
+                # datelist = pd.date_range(time_scale()[0], time_scale()[1]).tolist()
+                # plt.xticks(datelist)
+
+                #names of axes
+                plt.xlabel('time')
+                plt.ylabel(input.parametr_el())
+
+                #place legend on the plot
+                plt.legend( title='Metric') 
+
+                #plt.show()
+                return plt.plot(pred, label='predicted_data', color='green')
+
+
+        
 
 app = App(app_ui, server)
