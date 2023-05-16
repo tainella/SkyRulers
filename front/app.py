@@ -7,6 +7,7 @@ from datetime import date
 import seaborn as sns
 import numpy as np
 import subprocess
+import os
 
 phase_of_flight = ['take-off', 'cruise']
 type_of_engine = [ "CF34-8E", "CFM56-7", "CFM56-5B"]
@@ -117,10 +118,10 @@ app_ui = ui.page_fluid(shinyswatch.theme.superhero(),
                        ui.layout_sidebar(
                             ui.panel_sidebar(
                                 ui.input_file("file1", "Choose a csv file to upload:", multiple=False),
-                                ui.input_date_range("range_of_date", "Date range input"),
                                 ui.input_radio_buttons("flight_phase", "Flight phase", phase_of_flight),
                                 ui.input_selectize("family", "Engine family", type_of_engine),
                                 ui.output_ui("ui_selectize"),
+                                ui.input_date_range("range_of_date", "Date range input"),
                             ),
                             ui.panel_main(
                                 # Вывод текста при необходимости отладки
@@ -129,7 +130,6 @@ app_ui = ui.page_fluid(shinyswatch.theme.superhero(),
                             ),
                        ),
 )
-
 
 def server(input, output, session):
     
@@ -169,10 +169,14 @@ def server(input, output, session):
     def file_content():
         file = input.file1()
         if not file:
-            return 
+            return
+        df = pd.read_csv(file[0]["datapath"],parse_dates=True)
+        df.to_csv('../data/tmp.csv', index = False)
         if file[0]["type"] not in  ["text/csv", "xml"]:
             return "Wrong file extension"
-        return pd.read_csv(file[0]["datapath"],parse_dates=True)
+        subprocess.run(f"python3 /src/pipeline.py --fight_mode={input.flight_phase()} --engine_type={input.family()} --target={input.in_select()}", shell = True)
+        df = pd.read_csv('../data/result.csv')
+        return df
 
     @output
     @render.plot
