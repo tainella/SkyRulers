@@ -13,7 +13,8 @@ import torch
 
 sys.path.append('../src/')
 import preprocess
-from LinearModel import LinearModel
+import LinearModel
+import ClassificationModel
 from EngineDataset import EngineDataset
 
 
@@ -27,6 +28,7 @@ if __name__ == "__main__":
     CATEGORICAL_FEATURES = []
     NEED_FEATURES = []
     HAVE_TRUE = False
+    REGRESSION = True
 
     argv = sys.argv[1:]
     try:
@@ -58,10 +60,17 @@ if __name__ == "__main__":
     df = pd.read_csv(PATH_TO_CSV)
     if TARGET in df.columns.to_list():
         HAVE_TRUE = True
+    
+    if TARGET in ['BRAT', 'WBI']:
+        REGRESSION = False
     X = preprocess.preprocess_file(df, CATEGORICAL_FEATURES, NEED_FEATURES)
 
     #Выбор модели и подсчет
-    model = LinearModel.NN()
+    if REGRESSION:
+        model = LinearModel.NN()
+    else:
+        model = ClassificationModel.NN()
+    
     model.load_state_dict(torch.load(f'../models/{FLIGHT_MODE}_{ENGINE_FAMILY}_{TARGET}.pt'))
     model.eval()
     y_pred = model(torch.tensor(df.values, dtype=torch.float)).detach().numpy()

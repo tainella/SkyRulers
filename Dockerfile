@@ -20,8 +20,9 @@ RUN pip install --no-cache-dir --upgrade -r shiny \
 COPY model /model
 #код для отработки
 COPY ./ML/src/pipeline.py /src/pipeline.py
-COPY ./ML/src/model.py /src/model.py
+COPY ./ML/src/LinearModel.py /src/LinearModel.py
 COPY ./ML/src/preprocess.py /src/preprocess.py
+COPY ./ML/src/EngineDataset.py /src/EngineDataset.py
 #файл с описанием фичей для отдельных групп flight_mode+engine_family
 COPY ./ML/data/feature_groups.json /data/feature_groups.json
 
