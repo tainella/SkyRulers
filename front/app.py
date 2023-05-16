@@ -1,4 +1,4 @@
-from shiny import App, ui, render
+from shiny import App, ui, render, reactive
 import shinyswatch
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -6,9 +6,9 @@ from datetime import datetime
 from datetime import date
 import seaborn as sns
 import numpy as np
+import subprocess
 
-#shiny run --reload C:\My_files\S7\app.py
-
+phase_of_flight = ['take-off', 'cruise']
 type_of_engine = [ "CF34-8E", "CFM56-7", "CFM56-5B"]
 parametr = {"takeoff_CFM56-7": 
             ['DELFN',
@@ -111,38 +111,43 @@ parametr = {"takeoff_CFM56-7":
             'ZT49_D',
             'ZTLA_D',
             'ZWF36_D']}
-phase_of_flight = ['take-off', 'cruise']
 
 app_ui = ui.page_fluid(shinyswatch.theme.superhero(),
                        ui.h2("Predictive calculation of engine parameters"),
-                       #ui.panel_title(ui.input_file("file1", "Choose a csv file to upload:", multiple=False)
                        ui.layout_sidebar(
                             ui.panel_sidebar(
                                 ui.input_file("file1", "Choose a csv file to upload:", multiple=False),
                                 ui.input_date_range("range_of_date", "Date range input"),
+                                ui.input_radio_buttons("flight_phase", "Flight phase", phase_of_flight),
                                 ui.input_selectize("family", "Engine family", type_of_engine),
-                                ui.input_selectize("parametr_el", "Parameter for rendering", parametr[1]),
-                                ui.input_select("in_select", "Select parametr", ),
-                                ui.input_radio_buttons("flight_phase", "Flight phase", phase_of_flight)
+                                ui.output_ui("ui_selectize"),
                             ),
                             ui.panel_main(
+                                # Вывод текста при необходимости отладки
                                 #ui.output_text("my_text"),
-                                ui.output_plot("a_scatter_plot")
+                                ui.output_plot("line_plot")
                             ),
                        ),
 )
 
 
-
-
 def server(input, output, session):
-
-
     
     @output
-    @render.text
-    def my_text():
-        return input.range_of_date()[0], input.range_of_date()[1]
+    @render.ui
+    def ui_selectize():
+        x=selected_parametr()
+        return ui.input_selectize(
+            "in_select",
+            label=f"Select parametr ({len(x)} options)",
+            choices=x,
+            selected=None,
+        )
+    # Вывод текста при необходимости отладки
+    # @output
+    # @render.text
+    # def my_text():
+    #     return 
 
     def selected_parametr():
         if input.flight_phase() == "cruise":
@@ -168,48 +173,47 @@ def server(input, output, session):
         if file[0]["type"] not in  ["text/csv", "xml"]:
             return "Wrong file extension"
         return pd.read_csv(file[0]["datapath"],parse_dates=True)
-    
+
     @output
     @render.plot
-    def a_scatter_plot():
+    def line_plot():
         df = file_content()
         if isinstance(df, pd.DataFrame): 
             if len(df.columns.to_list()) == 3:
 
                 df['flight_datetime']=pd.to_datetime(df['flight_datetime'])
-                df = df.loc[(df['flight_datetime'] > np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) < np.datetime64(input.range_of_date()[1]))]
-
-                #df = df.loc[(df['flight_datetime'] > (input.range_of_date()[0]).astype('datetime64[as]')) & (df['flight_datetime'] < (input.range_of_date()[1]).astype('datetime64[as]'))]
+                df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
 
                 df.sort_values(by="flight_datetime", inplace=True)
                 df.index=df['flight_datetime']
-                #df['flight_datetime']=df['flight_datetime'].astype('datetime64[as]')
                 fig, ax=plt.subplots()
 
                 data=df.resample('W').sum()
                 x_dates=data.index.strftime("%Y-%m-%d").unique()
                 ax.set_xticklabels(labels=x_dates, rotation=20)
-                ax1 = ax = sns.lineplot(data=data['true'], color='g', label = "true values")
+                ax1 = sns.lineplot(data=data['true'], color='g', label = "true values")
                 ax = sns.lineplot(data=data['predictions'], color='r', label = 'prediction')
-                ax.set (xlabel='Time', ylabel=input.parametr_el(), title='Sensor readings')
+                ax.set (xlabel='Time', ylabel=input.in_select(), title='Sensor readings')
                 sns.set_theme(style="darkgrid")
                 plt.legend(title='Metric')
                 return fig
+            
             else:
 
                 df['flight_datetime']=pd.to_datetime(df['flight_datetime'])
+                df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
+                
                 df.sort_values(by="flight_datetime", inplace=True)
                 df.index=df['flight_datetime']
-                #df['flight_datetime']=df['flight_datetime'].astype('datetime64[as]')
                 fig, ax=plt.subplots()
 
                 data=df.resample('W').sum()
                 x_dates=data.index.strftime("%Y-%m-%d").unique()
                 ax.set_xticklabels(labels=x_dates, rotation=20)
                 ax = sns.lineplot(data=data['predictions'], color='r', label = 'prediction')
-                ax.set(xlabel='Time', ylabel=input.parametr_el(), title='Sensor readings')
+                ax.set(xlabel='Time', ylabel=input.in_select(), title='Sensor readings')
                 sns.set_theme(style="darkgrid")
                 plt.legend(title='Metric')
                 return fig
-
+            
 app = App(app_ui, server)
