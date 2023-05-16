@@ -9,7 +9,7 @@ import json
 from sklearn.preprocessing import StandardScaler
 from math import sqrt
 
-import torch
+from lightgbm import LGBMRegressor
 
 sys.path.append('../src/')
 import preprocess
@@ -19,7 +19,7 @@ from EngineDataset import EngineDataset
 
 
 if __name__ == "__main__":
-    PATH_TO_CSV = "/data/tmp.csv"
+    PATH_TO_CSV = "../data/tmp.csv"
     PATH_TO_RESULT = "/data/result.csv"
 
     FLIGHT_MODE = ""
@@ -53,8 +53,14 @@ if __name__ == "__main__":
         feature_groups_dict = json.load(json_file)
         for item in feature_groups_dict.items():
             if (FLIGHT_MODE in item[0]) and (ENGINE_FAMILY in item[0]) and (TARGET in item[0]):
-                CATEGORICAL_FEATURES = item[1][0]
-                NEED_FEATURES = item[1][1]
+                CATEGORICAL_FEATURES = item[1]
+
+    #ПОМЕНЯТЬ ЧТОБЫ БЫЛО ДЛЯ РАЗНЫХ ФАЙЛОВ РАЗНОЕ
+    with open('../data/needed.json') as json_file:
+        feature_groups_dict = json.load(json_file)
+        for item in feature_groups_dict.items():
+            if (FLIGHT_MODE in item[0]) and (ENGINE_FAMILY in item[0]) and (TARGET in item[0]):
+                NEED_FEATURES = item[1]
 
     #Подготовка данных
     df = pd.read_csv(PATH_TO_CSV)
@@ -64,28 +70,33 @@ if __name__ == "__main__":
     if TARGET in ['BRAT', 'WBI']:
         REGRESSION = False
     X = preprocess.preprocess_file(df, CATEGORICAL_FEATURES, NEED_FEATURES)
-
-    #Выбор модели и подсчет
-    if REGRESSION:
-        model = LinearModel.NN()
-    else:
-        model = ClassificationModel.NN()
     
-    model.load_state_dict(torch.load(f'../models/{FLIGHT_MODE}_{ENGINE_FAMILY}_{TARGET}.pt'))
-    model.eval()
-    y_pred = model(torch.tensor(df.values, dtype=torch.float)).detach().numpy()
+    if type(X) is not list:
 
-    #Подготовка файла результа
-    if HAVE_TRUE:
-        result_df = pd.DataFrame({
-            'flight_datetime' : df['flight_datetime'],
-            'predictions' : y_pred,
-            'true' : df[TARGET]
-        })
+        #Выбор модели и подсчет
+        if REGRESSION:
+            model = LinearModel.NN()
+        else:
+            model = ClassificationModel.NN()
+        
+        model = lightgbm.Booster(model_file=f'../models/{FLIGHT_MODE}_{ENGINE_FAMILY}_{TARGET}.txt')
+        y_pred = model(X.values)
+
+        #Подготовка файла результа
+        if HAVE_TRUE:
+            result_df = pd.DataFrame({
+                'flight_datetime' : df['flight_datetime'],
+                'predictions' : y_pred,
+                'true' : df[TARGET]
+            })
+        else:
+            result_df = pd.DataFrame({
+                'flight_datetime' : df['flight_datetime'],
+                'predictions' : y_pred
+            })
+
+        result_df.to_csv(PATH_TO_RESULT, index = False)
     else:
-        result_df = pd.DataFrame({
-            'flight_datetime' : df['flight_datetime'],
-            'predictions' : y_pred
-        })
+        result_df = pd.DataFrame({'error' : X})
+        result_df.to_csv(PATH_TO_RESULT, index = False)
 
-    result_df.to_csv(PATH_TO_RESULT, index = False)

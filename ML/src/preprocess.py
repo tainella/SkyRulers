@@ -38,28 +38,7 @@ def to_CI(df):
             df[cl] = pd.Series(ream(df[cl].values))
     return df
 
-def scale(data):
-    # fit scaler
-    scaler = StandardScaler()
-    scaler = scaler.fit(data)
-    # transform train
-    data_scaled = scaler.transform(data)
-    return data_scaled
-
-# inverse scaling for a forecasted value
-def invert_scale(scaler, data):
-    inverted = scaler.inverse_transform(data)
-    return inverted
-
 def preprocess_file(df, to_categorical, need_features):
-    #проверка что в переданном файле есть всё что нам нужно
-    for cl in need_features:
-        if cl not in df.columns.to_list():
-            print('ОШИБКА ОШИБКА ОШИБКА')
-    drop_features = list(set(df.columns.to_list()) - set(need_features))
-    #удалить лишние
-    df = df.drop(drop_features, axis = 1)
-
     #Пропуски в полученных данных
     if sum(df.isna()) > 0:
         print('Данные содержат пропуски, результат подсчета будет не точен')
@@ -73,10 +52,8 @@ def preprocess_file(df, to_categorical, need_features):
     
     #перевести в систему СИ
     df = to_CI(df)
-    
-    #скалировать данные
-    scaled_features = scale(df[numerical].values)
-    scaled_features_df = pd.DataFrame(scaled_features, index=df[numerical].index, columns=df[numerical].columns)
+
+    scaled_features_df = df[numerical]
     
     #исправить типы данных категориальных фичей
     for cl in to_categorical:
@@ -84,5 +61,17 @@ def preprocess_file(df, to_categorical, need_features):
         #One Hot Encoding
         one_hot = pd.get_dummies(df[cl])
         scaled_features_df = scaled_features_df.join(one_hot)
+
+    #проверка что в переданном файле есть всё что нам нужно
+    missed_cl = []
+    for cl in need_features:
+        if cl not in df.columns.to_list():
+            missed_cl.append(cl)
+    if len(missed_cl) > 0:
+        return missed_cl
+    
+    drop_features = list(set(df.columns.to_list()) - set(need_features))
+    #удалить лишние
+    df = df.drop(drop_features, axis = 1)
     
     return scaled_features_df
