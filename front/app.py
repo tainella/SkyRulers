@@ -125,7 +125,7 @@ app_ui = ui.page_fluid(shinyswatch.theme.superhero(),
                             ),
                             ui.panel_main(
                                 # Вывод текста при необходимости отладки
-                                #ui.output_text("my_text"),
+                                ui.output_text("my_text"),
                                 ui.output_plot("line_plot")
                             ),
                        ),
@@ -143,11 +143,17 @@ def server(input, output, session):
             choices=x,
             selected=None,
         )
+    
     # Вывод текста при необходимости отладки
-    # @output
-    # @render.text
-    # def my_text():
-    #     return 
+    @output
+    @render.text
+    def my_text():
+        if file_content()["error"]:
+            df = file_content()
+            buf = ""
+            for i in df["error"]:
+                buf += str(i)+', '
+            return buf
 
     def selected_parametr():
         if input.flight_phase() == "cruise":
@@ -171,11 +177,14 @@ def server(input, output, session):
         if not file:
             return
         df = pd.read_csv(file[0]["datapath"],parse_dates=True)
-        df.to_csv('../data/tmp.csv', index = False)
-        if file[0]["type"] not in  ["text/csv", "xml"]:
+        
+        if file[0]["type"] not in ["text/csv", "xml"]:
             return "Wrong file extension"
+        df.to_csv('../data/tmp.csv', index = False)
         subprocess.run(f"python3 /src/pipeline.py --fight_mode={input.flight_phase()} --engine_type={input.family()} --target={input.in_select()}", shell = True)
         df = pd.read_csv('../data/result.csv')
+        if df["error"]:
+            return df["error"]
         return df
 
     @output
