@@ -11,7 +11,7 @@ RUN mkdir /data /model /src
 RUN pip install --no-cache-dir --upgrade shiny \
     seaborn \
     lightgbm \
-    pandas \
+    pandas==1.5.3 \
     numpy \
     shap \
     pint \

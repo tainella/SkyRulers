@@ -184,7 +184,6 @@ def server(input, output, session):
                 if "error" in df.columns.to_list():
                     logger.exception("НЕПРАВИЛЬНЫЕ КОЛОНКИ", df['error'])
                 elif len(df.columns.to_list()) == 3:
-                    logger.exception("!!!!!!!КОЛОНКИ!!!!!", df.columns.to_list())
                     df['flight_datetime']=pd.to_datetime(df['flight_datetime'])
                     df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
 
@@ -192,7 +191,7 @@ def server(input, output, session):
                     df.index=pd.to_datetime(df['flight_datetime'])
                     fig, ax=plt.subplots()
 
-                    data=df.resample('W').sum()
+                    data=df.resample('W').sum(numeric_only=True)
                     x_dates=data.index.strftime("%Y-%m-%d").unique()
                     ax.set_xticklabels(labels=x_dates, rotation=20)
                     ax1 = sns.lineplot(data=data['true'], color='g', label = "true values")
