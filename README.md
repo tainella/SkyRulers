@@ -10,7 +10,7 @@ Notion: https://www.notion.so/be5dc2bbfd66463888958a456f96b8e7?pvs=4
 
 Видеодемонстрация: 
 
-![Alt text](https://github.com/tainella/SkyRulers/blob/f6fc7e3082d6431ce770bf20cbc611eca71b1d59/screenshot.jfif "title")
+![Alt text](https://github.com/tainella/SkyRulers/blob/109196bd0ff6334784141a937379daaef79f81f3/data/screenshot.jfif)
 
 ## Установка и запуск проекта
 
