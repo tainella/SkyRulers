@@ -14,6 +14,12 @@ Notion: https://www.notion.so/be5dc2bbfd66463888958a456f96b8e7?pvs=4
 ![Alt text](https://github.com/tainella/SkyRulers/blob/109196bd0ff6334784141a937379daaef79f81f3/data/screenshot.jfif)
 
 ## Установка и запуск проекта
+sudo docker-compose up
+
+По ссылке localhost:49903
+
 
 ## Описание структуры репозитория
 
+Для данного проекта мы обeчили для каждого типа двигателя свой набор параметров и сохранили веса в папке ml/models. Также при обучении были выделены ключевые фичи которые  сохранены в data/{engine_family}_needed.json
+для обработки данных для предсказания результатов.
