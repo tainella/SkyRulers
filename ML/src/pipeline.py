@@ -31,7 +31,6 @@ def run(FLIGHT_MODE, ENGINE_FAMILY, TARGET):
             if (FLIGHT_MODE in item[0]) and (ENGINE_FAMILY in item[0]):
                 CATEGORICAL_FEATURES = item[1]
 
-    #ПОМЕНЯТЬ ЧТОБЫ БЫЛО ДЛЯ РАЗНЫХ ФАЙЛОВ РАЗНОЕ
     with open(f'/data/{FLIGHT_MODE}_{ENGINE_FAMILY}_needed.json') as json_file:
         feature_groups_dict = json.load(json_file)
         for item in feature_groups_dict.items():
