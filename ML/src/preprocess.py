@@ -13,6 +13,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from math import sqrt
 
+
+from loguru import logger
+
 def to_CI(df):
     def celc(x):
         ureg = UnitRegistry()
@@ -52,15 +55,18 @@ def preprocess_file(df, to_categorical, need_features):
     df = to_CI(df)
 
     #исправить типы данных категориальных фичей
-    scaled_features_df = df[numerical]
+    scaled_features_df = deepcopy(df[numerical])
+    logger.exception(f"@@@@@@@@@{to_categorical}@@@@@@@@@")
     for cl in to_categorical:
+        
         df[cl] = df[cl].astype(object)
         #One Hot Encoding
         one_hot = pd.get_dummies(df[cl], prefix = cl)
         scaled_features_df = scaled_features_df.join(one_hot)
-    df = scaled_features_df
+    df = deepcopy(scaled_features_df)
 
     #проверка что в переданном файле есть всё что нам нужно
+    logger.exception(f"????????{df.columns.to_list()}?????????")
     missed_cl = []
     for cl in need_features:
         if cl not in df.columns.to_list():

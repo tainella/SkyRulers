@@ -121,11 +121,11 @@ app_ui = ui.page_fluid(shinyswatch.theme.superhero(),
                        ui.h2("Predictive calculation of engine parameters"),
                        ui.layout_sidebar(
                             ui.panel_sidebar(
-                                ui.input_file("file1", "Choose a csv file to upload:", multiple=False),
                                 ui.input_radio_buttons("flight_phase", "Flight phase", phase_of_flight),
                                 ui.input_selectize("family", "Engine family", type_of_engine),
                                 ui.output_ui("ui_selectize"),
                                 ui.input_date_range("range_of_date", "Date range input"),
+                                ui.input_file("file1", "Choose a csv file to upload:", multiple=False),
                             ),
                             ui.panel_main(
                                 # Вывод текста при необходимости отладки
@@ -156,7 +156,7 @@ def server(input, output, session):
             return "Загрузите файл для начала работы"
         df = file_content()
         if "error" in df.columns.to_list():
-            buf = ','.join(df['error'])
+            buf = '\n'.join(map(str, df['error']))
             return f"НЕ ХВАТАЕТ КОЛОНОК: \n {buf}"
 
     def selected_parametr():
@@ -184,7 +184,7 @@ def server(input, output, session):
                 if "error" in df.columns.to_list():
                     logger.exception("НЕПРАВИЛЬНЫЕ КОЛОНКИ", df['error'])
                 elif len(df.columns.to_list()) == 3:
-
+                    logger.exception("!!!!!!!КОЛОНКИ!!!!!", df.columns.to_list())
                     df['flight_datetime']=pd.to_datetime(df['flight_datetime'])
                     df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
 

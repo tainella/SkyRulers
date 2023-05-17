@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from math import sqrt
 
 import lightgbm
+from loguru import logger
 
 sys.path.append('../src/')
 import preprocess
@@ -27,15 +28,17 @@ def run(FLIGHT_MODE, ENGINE_FAMILY, TARGET):
     with open('/data/feature_groups.json') as json_file:
         feature_groups_dict = json.load(json_file)
         for item in feature_groups_dict.items():
-            if (FLIGHT_MODE in item[0]) and (ENGINE_FAMILY in item[0]) and (TARGET in item[0]):
+            if (FLIGHT_MODE in item[0]) and (ENGINE_FAMILY in item[0]):
                 CATEGORICAL_FEATURES = item[1]
 
     #ПОМЕНЯТЬ ЧТОБЫ БЫЛО ДЛЯ РАЗНЫХ ФАЙЛОВ РАЗНОЕ
     with open(f'/data/{FLIGHT_MODE}_{ENGINE_FAMILY}_needed.json') as json_file:
         feature_groups_dict = json.load(json_file)
         for item in feature_groups_dict.items():
+            logger.exception(f"{item[0]}")
             if TARGET == item[0]:
                 NEED_FEATURES = item[1]
+                
 
     #Подготовка данных
     df = pd.read_csv(PATH_TO_CSV)
