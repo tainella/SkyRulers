@@ -9,54 +9,32 @@ import json
 from sklearn.preprocessing import StandardScaler
 from math import sqrt
 
-from lightgbm import LGBMRegressor
+import lightgbm
 
 sys.path.append('../src/')
 import preprocess
 
-
-if __name__ == "__main__":
+def run(FLIGHT_MODE, ENGINE_FAMILY, TARGET):
     PATH_TO_CSV = "../data/tmp.csv"
     PATH_TO_RESULT = "/data/result.csv"
 
-    FLIGHT_MODE = ""
-    ENGINE_FAMILY = ""
-    TARGET = ""
     CATEGORICAL_FEATURES = []
     NEED_FEATURES = []
     HAVE_TRUE = False
     REGRESSION = True
 
-    argv = sys.argv[1:]
-    try:
-        options, args = getopt.getopt(argv, "fm:ef:t",
-                                   ["fight_mode=",
-                                    "engine_family=",
-                                    "target="
-                                    ])
-    except:
-        print("Error Message ")
-
-    for name, value in options:
-        if name in ['fm', '--fight_mode']:
-            FLIGHT_MODE = value
-        elif name in ['ef', '--engine_family']:
-            ENGINE_FAMILY = value
-        elif name in ['t', '--target']:
-            TARGET = value
-
     #Получить список категориальных фичей для данного 
-    with open('../data/feature_groups.json') as json_file:
+    with open('/data/feature_groups.json') as json_file:
         feature_groups_dict = json.load(json_file)
         for item in feature_groups_dict.items():
             if (FLIGHT_MODE in item[0]) and (ENGINE_FAMILY in item[0]) and (TARGET in item[0]):
                 CATEGORICAL_FEATURES = item[1]
 
     #ПОМЕНЯТЬ ЧТОБЫ БЫЛО ДЛЯ РАЗНЫХ ФАЙЛОВ РАЗНОЕ
-    with open('../data/needed.json') as json_file:
+    with open(f'/data/{FLIGHT_MODE}_{ENGINE_FAMILY}_needed.json') as json_file:
         feature_groups_dict = json.load(json_file)
         for item in feature_groups_dict.items():
-            if (FLIGHT_MODE in item[0]) and (ENGINE_FAMILY in item[0]) and (TARGET in item[0]):
+            if TARGET == item[0]:
                 NEED_FEATURES = item[1]
 
     #Подготовка данных
@@ -66,17 +44,17 @@ if __name__ == "__main__":
     
     if TARGET in ['BRAT', 'WBI']:
         REGRESSION = False
+    
     X = preprocess.preprocess_file(df, CATEGORICAL_FEATURES, NEED_FEATURES)
     
-    if type(X) is not list:
-
+    if not isinstance(X, list):
         #Выбор модели и подсчет
         if not REGRESSION:
             result_df = pd.DataFrame({'error' : ['Классификация']})
             result_df.to_csv(PATH_TO_RESULT, index = False)
         else:
             model = lightgbm.Booster(model_file=f'../models/{FLIGHT_MODE}_{ENGINE_FAMILY}_{TARGET}.txt')
-            y_pred = model(X.values)
+            y_pred = model.predict(X.values)
 
             #Подготовка файла результа
             if HAVE_TRUE:

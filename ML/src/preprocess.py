@@ -40,9 +40,7 @@ def to_CI(df):
 
 def preprocess_file(df, to_categorical, need_features):
     #Пропуски в полученных данных
-    if sum(df.isna()) > 0:
-        print('Данные содержат пропуски, результат подсчета будет не точен')
-        df = df.fillna(0)
+    df = df.fillna(0)
 
     #отсортировать колонки в правильном порядке, если неправильно csv
     df = df[sorted(df.columns)]

@@ -15,22 +15,19 @@ RUN pip install --no-cache-dir --upgrade shiny \
     numpy \
     shap \
     pint \
-    shinyswatch
+    shinyswatch \
+    loguru
 
 #веса моделей
 COPY ./ML/models /models/
 #код для отработки
 COPY ./ML/src/pipeline.py /src/pipeline.py
 COPY ./ML/src/preprocess.py /src/preprocess.py
-#файл с описанием фичей для отдельных групп flight_mode+engine_family
-COPY ./ML/data/feature_groups.json /data/feature_groups.json
-COPY ./ML/data/needed.json /data/needed.json
 
 COPY ./front/ /src
+COPY ./data /data
 
 CMD ["python", "-m", "shiny", "run", "--host", "0.0.0.0", "--port", "49903", "--reload", "/src/app.py"]
-
-#CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
 
 
 

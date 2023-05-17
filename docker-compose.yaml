@@ -1,27 +1,12 @@
 version: "3.8"
 services:
-  erg:
-    build: .
-    ports:
-      - "80:80"
-    volumes:
-      - "./data:/data"
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - capabilities: [gpu]
-  front-ui:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    #command: ["npm", "run", "serve"] #ПОМЕНЯТЬ
     restart: unless-stopped
     user: 'root'
     ports:
       - "49903:49903"
     volumes:
       - './data:/data'
-  # volumes:
-  #   shiny_logs:
-  #     external: true

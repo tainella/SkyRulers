@@ -6,8 +6,12 @@ from datetime import datetime
 from datetime import date
 import seaborn as sns
 import numpy as np
-import subprocess
 import os
+import sys
+from loguru import logger
+
+sys.path.append('../src/')
+import pipeline
 
 phase_of_flight = ['takeoff', 'cruise']
 type_of_engine = [ "CF34-8E", "CFM56-7", "CFM56-5B"]
@@ -125,7 +129,7 @@ app_ui = ui.page_fluid(shinyswatch.theme.superhero(),
                             ),
                             ui.panel_main(
                                 # Вывод текста при необходимости отладки
-                                #ui.output_text("my_text"),
+                                ui.output_text("my_text"),
                                 ui.output_plot("line_plot")
                             ),
                        ),
@@ -148,14 +152,12 @@ def server(input, output, session):
     @output
     @render.text
     def my_text():
-        # df = file_content()
-        # if "error" in df.columns.to_list():
-        #     buf = ""
-        #     for i in df["error"]:
-        #         buf += str(i)+', '
-        #     return buf
-        file = input.file1()
-        return file[0]["datapath"]
+        if not isinstance(file_content(), pd.DataFrame):
+            return "Загрузите файл для начала работы"
+        df = file_content()
+        if "error" in df.columns.to_list():
+            buf = ','.join(df['error'])
+            return f"НЕ ХВАТАЕТ КОЛОНОК: \n {buf}"
 
     def selected_parametr():
         return parametr[f"{input.flight_phase()}_{input.family()}"]
@@ -169,52 +171,55 @@ def server(input, output, session):
         if file[0]["type"] not in ["text/csv", "xml"]:
             return "Wrong file extension"
         df.to_csv('../data/tmp.csv', index = False)
-        subprocess.run(f"python3 /src/pipeline.py --fight_mode={input.flight_phase()} --engine_type={input.family()} --target={input.in_select()}", shell = True)
+        pipeline.run(input.flight_phase(), input.family(), input.in_select())
         df = pd.read_csv('../data/result.csv')
-        if df["error"]:
-            return df["error"]
         return df
 
     @output
     @render.plot
     def line_plot():
-        df = file_content()
-        if isinstance(df, pd.DataFrame): 
-            if len(df.columns.to_list()) == 3:
+        try:
+            df = file_content()
+            if isinstance(df, pd.DataFrame):
+                if "error" in df.columns.to_list():
+                    logger.exception("НЕПРАВИЛЬНЫЕ КОЛОНКИ", df['error'])
+                elif len(df.columns.to_list()) == 3:
 
-                df['flight_datetime']=pd.to_datetime(df['flight_datetime'])
-                df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
+                    df['flight_datetime']=pd.to_datetime(df['flight_datetime'])
+                    df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
 
-                df.sort_values(by="flight_datetime", inplace=True)
-                df.index=df['flight_datetime']
-                fig, ax=plt.subplots()
+                    df.sort_values(by="flight_datetime", inplace=True)
+                    df.index=df['flight_datetime']
+                    fig, ax=plt.subplots()
 
-                data=df.resample('W').sum()
-                x_dates=data.index.strftime("%Y-%m-%d").unique()
-                ax.set_xticklabels(labels=x_dates, rotation=20)
-                ax1 = sns.lineplot(data=data['true'], color='g', label = "true values")
-                ax = sns.lineplot(data=data['predictions'], color='r', label = 'prediction')
-                ax.set (xlabel='Time', ylabel=input.in_select(), title='Sensor readings')
-                sns.set_theme(style="darkgrid")
-                plt.legend(title='Metric')
-                return fig
-            
-            else:
-
-                df['flight_datetime']=pd.to_datetime(df['flight_datetime'])
-                df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
+                    data=df.resample('W').sum()
+                    x_dates=data.index.strftime("%Y-%m-%d").unique()
+                    ax.set_xticklabels(labels=x_dates, rotation=20)
+                    ax1 = sns.lineplot(data=data['true'], color='g', label = "true values")
+                    ax = sns.lineplot(data=data['predictions'], color='r', label = 'prediction')
+                    ax.set (xlabel='Time', ylabel=input.in_select(), title='Sensor readings')
+                    sns.set_theme(style="darkgrid")
+                    plt.legend(title='Metric')
+                    return fig
                 
-                df.sort_values(by="flight_datetime", inplace=True)
-                df.index=df['flight_datetime']
-                fig, ax=plt.subplots()
+                else:
+                    logger.exception('!!!!!!!!!!!!!!', df.columns.to_list())
+                    df['flight_datetime']=pd.to_datetime(df['flight_datetime'])
+                    df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
+                    
+                    df.sort_values(by="flight_datetime", inplace=True)
+                    df.index=df['flight_datetime']
+                    fig, ax=plt.subplots()
 
-                data=df.resample('W').sum()
-                x_dates=data.index.strftime("%Y-%m-%d").unique()
-                ax.set_xticklabels(labels=x_dates, rotation=20)
-                ax = sns.lineplot(data=data['predictions'], color='r', label = 'prediction')
-                ax.set(xlabel='Time', ylabel=input.in_select(), title='Sensor readings')
-                sns.set_theme(style="darkgrid")
-                plt.legend(title='Metric')
-                return fig
+                    data=df.resample('W').sum()
+                    x_dates=data.index.strftime("%Y-%m-%d").unique()
+                    ax.set_xticklabels(labels=x_dates, rotation=20)
+                    ax = sns.lineplot(data=data['predictions'], color='r', label = 'prediction')
+                    ax.set(xlabel='Time', ylabel=input.in_select(), title='Sensor readings')
+                    sns.set_theme(style="darkgrid")
+                    plt.legend(title='Metric')
+                    return fig
+        except:
+            logger.exception("AAAAA")
             
 app = App(app_ui, server)
