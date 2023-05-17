@@ -8,9 +8,7 @@ Trello: https://trello.com/b/M6qpalEy/облако
 
 Notion: https://www.notion.so/be5dc2bbfd66463888958a456f96b8e7?pvs=4
 
-Отчет по анализу признаков: ![Alt text](https://docs.google.com/document/d/1VFu-uK7tnos7f2H5roqbkRfUW2aZlmt3yjotGooOckU/edit?usp=share_link)
-
-Протестировать можно на "SkyRulers/data/cruise_CF34-8E.csv"
+Отчет по анализу признаков: https://docs.google.com/document/d/1VFu-uK7tnos7f2H5roqbkRfUW2aZlmt3yjotGooOckU/edit?usp=share_link
 
 Демонстрация работы: ![Alt text](https://github.com/tainella/SkyRulers/blob/9a0f765df2eb4e53e46fb75f54fca578a54a27ba/data/demo.jfif)
 
@@ -20,10 +18,12 @@ Notion: https://www.notion.so/be5dc2bbfd66463888958a456f96b8e7?pvs=4
 ![Alt text](https://github.com/tainella/SkyRulers/blob/109196bd0ff6334784141a937379daaef79f81f3/data/screenshot.jfif)
 
 ## Установка и запуск проекта
+
 sudo docker-compose up
 
 По ссылке localhost:49903
 
+Протестировать можно на "SkyRulers/data/cruise_CF34-8E.csv"
 
 ## Описание структуры репозитория
 
