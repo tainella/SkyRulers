@@ -6,13 +6,21 @@ services:
       - "80:80"
     volumes:
       - "./data:/data"
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
   front-ui:
-    build: ./front/
-    command: ["npm", "run", "serve"] #ПОМЕНЯТЬ
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    #command: ["npm", "run", "serve"] #ПОМЕНЯТЬ
+    restart: unless-stopped
+    user: 'root'
     ports:
-      - "8080:8080" #ПОМЕНЯТЬ
+      - "80:3838"
+    volumes:
+      - 'shiny_logs:/var/log/shiny-server'
+  volumes:
+    shiny_logs:

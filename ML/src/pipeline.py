@@ -13,9 +13,6 @@ from lightgbm import LGBMRegressor
 
 sys.path.append('../src/')
 import preprocess
-import LinearModel
-import ClassificationModel
-from EngineDataset import EngineDataset
 
 
 if __name__ == "__main__":
@@ -74,28 +71,27 @@ if __name__ == "__main__":
     if type(X) is not list:
 
         #Выбор модели и подсчет
-        if REGRESSION:
-            model = LinearModel.NN()
+        if not REGRESSION:
+            result_df = pd.DataFrame({'error' : ['Классификация']})
+            result_df.to_csv(PATH_TO_RESULT, index = False)
         else:
-            model = ClassificationModel.NN()
-        
-        model = lightgbm.Booster(model_file=f'../models/{FLIGHT_MODE}_{ENGINE_FAMILY}_{TARGET}.txt')
-        y_pred = model(X.values)
+            model = lightgbm.Booster(model_file=f'../models/{FLIGHT_MODE}_{ENGINE_FAMILY}_{TARGET}.txt')
+            y_pred = model(X.values)
 
-        #Подготовка файла результа
-        if HAVE_TRUE:
-            result_df = pd.DataFrame({
-                'flight_datetime' : df['flight_datetime'],
-                'predictions' : y_pred,
-                'true' : df[TARGET]
-            })
-        else:
-            result_df = pd.DataFrame({
-                'flight_datetime' : df['flight_datetime'],
-                'predictions' : y_pred
-            })
+            #Подготовка файла результа
+            if HAVE_TRUE:
+                result_df = pd.DataFrame({
+                    'flight_datetime' : df['flight_datetime'],
+                    'predictions' : y_pred,
+                    'true' : df[TARGET]
+                })
+            else:
+                result_df = pd.DataFrame({
+                    'flight_datetime' : df['flight_datetime'],
+                    'predictions' : y_pred
+                })
 
-        result_df.to_csv(PATH_TO_RESULT, index = False)
+            result_df.to_csv(PATH_TO_RESULT, index = False)
     else:
         result_df = pd.DataFrame({'error' : X})
         result_df.to_csv(PATH_TO_RESULT, index = False)

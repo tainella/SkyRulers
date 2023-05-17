@@ -53,14 +53,14 @@ def preprocess_file(df, to_categorical, need_features):
     #перевести в систему СИ
     df = to_CI(df)
 
-    scaled_features_df = df[numerical]
-    
     #исправить типы данных категориальных фичей
+    scaled_features_df = df[numerical]
     for cl in to_categorical:
         df[cl] = df[cl].astype(object)
         #One Hot Encoding
-        one_hot = pd.get_dummies(df[cl])
+        one_hot = pd.get_dummies(df[cl], prefix = cl)
         scaled_features_df = scaled_features_df.join(one_hot)
+    df = scaled_features_df
 
     #проверка что в переданном файле есть всё что нам нужно
     missed_cl = []
@@ -70,8 +70,8 @@ def preprocess_file(df, to_categorical, need_features):
     if len(missed_cl) > 0:
         return missed_cl
     
-    drop_features = list(set(df.columns.to_list()) - set(need_features))
     #удалить лишние
+    drop_features = list(set(df.columns.to_list()) - set(need_features))
     df = df.drop(drop_features, axis = 1)
     
-    return scaled_features_df
+    return df

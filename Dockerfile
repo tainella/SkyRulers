@@ -8,7 +8,7 @@ RUN apt-get update && \
 
 RUN mkdir /data /model /src
 
-RUN pip install --no-cache-dir --upgrade -r shiny \
+RUN pip install --no-cache-dir --upgrade shiny \
     seaborn \
     lightgbm \
     pandas \
@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir --upgrade -r shiny \
     pint
 
 #веса моделей
-COPY model /model
+COPY ./ML/models /models/
 #код для отработки
 COPY ./ML/src/pipeline.py /src/pipeline.py
 COPY ./ML/src/preprocess.py /src/preprocess.py
