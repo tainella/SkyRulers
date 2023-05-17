@@ -9,7 +9,7 @@ import numpy as np
 import subprocess
 import os
 
-phase_of_flight = ['take-off', 'cruise']
+phase_of_flight = ['takeoff', 'cruise']
 type_of_engine = [ "CF34-8E", "CFM56-7", "CFM56-5B"]
 parametr = {"takeoff_CFM56-7": 
             ['DELFN',
@@ -125,7 +125,7 @@ app_ui = ui.page_fluid(shinyswatch.theme.superhero(),
                             ),
                             ui.panel_main(
                                 # Вывод текста при необходимости отладки
-                                ui.output_text("my_text"),
+                                #ui.output_text("my_text"),
                                 ui.output_plot("line_plot")
                             ),
                        ),
@@ -148,29 +148,17 @@ def server(input, output, session):
     @output
     @render.text
     def my_text():
-        if file_content()["error"]:
-            df = file_content()
-            buf = ""
-            for i in df["error"]:
-                buf += str(i)+', '
-            return buf
+        # df = file_content()
+        # if "error" in df.columns.to_list():
+        #     buf = ""
+        #     for i in df["error"]:
+        #         buf += str(i)+', '
+        #     return buf
+        file = input.file1()
+        return file[0]["datapath"]
 
     def selected_parametr():
-        if input.flight_phase() == "cruise":
-            if input.family() == "CF34-8E":
-                return parametr["cruise_CF34-8E"]
-            elif input.family() == "CFM56-7":
-                return parametr["cruise_CFM56-7"]
-            else:
-                return parametr['cruise_CFM56-5B']
-        else:
-            if input.family() == "CF34-8E":
-                return parametr["takeoff_CF34-8E"]
-            elif input.family() == "CFM56-7":
-                return parametr['takeoff_CFM56-7']
-            else:
-                return parametr["takeoff_CFM56-5B"]
-
+        return parametr[f"{input.flight_phase()}_{input.family()}"]
     
     def file_content():
         file = input.file1()

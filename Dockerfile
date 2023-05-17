@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir --upgrade shiny \
     pandas \
     numpy \
     shap \
-    pint
+    pint \
+    shinyswatch
 
 #веса моделей
 COPY ./ML/models /models/
@@ -25,9 +26,9 @@ COPY ./ML/src/preprocess.py /src/preprocess.py
 COPY ./ML/data/feature_groups.json /data/feature_groups.json
 COPY ./ML/data/needed.json /data/needed.json
 
-COPY ./front/ /app/
+COPY ./front/ /src
 
-CMD ["R", "-e", "shiny::runApp('/app')"]
+CMD ["python", "-m", "shiny", "run", "--host", "0.0.0.0", "--port", "49903", "--reload", "/src/app.py"]
 
 #CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
 
