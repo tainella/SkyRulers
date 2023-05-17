@@ -25,6 +25,10 @@ COPY ./ML/src/preprocess.py /src/preprocess.py
 COPY ./ML/data/feature_groups.json /data/feature_groups.json
 COPY ./ML/data/needed.json /data/needed.json
 
+COPY ./front/ /app/
+
+CMD ["R", "-e", "shiny::runApp('/app')"]
+
 #CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
 
 
