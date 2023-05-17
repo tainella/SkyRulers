@@ -56,7 +56,6 @@ def preprocess_file(df, to_categorical, need_features):
 
     #исправить типы данных категориальных фичей
     scaled_features_df = deepcopy(df[numerical])
-    logger.exception(f"@@@@@@@@@{to_categorical}@@@@@@@@@")
     for cl in to_categorical:
         
         df[cl] = df[cl].astype(object)
@@ -66,7 +65,6 @@ def preprocess_file(df, to_categorical, need_features):
     df = deepcopy(scaled_features_df)
 
     #проверка что в переданном файле есть всё что нам нужно
-    logger.exception(f"????????{df.columns.to_list()}?????????")
     missed_cl = []
     for cl in need_features:
         if cl not in df.columns.to_list():

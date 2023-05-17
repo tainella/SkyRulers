@@ -189,7 +189,7 @@ def server(input, output, session):
                     df = df.loc[(df['flight_datetime'] >= np.datetime64(input.range_of_date()[0])) & (((df['flight_datetime'])) <= np.datetime64(input.range_of_date()[1]))]
 
                     df.sort_values(by="flight_datetime", inplace=True)
-                    df.index=df['flight_datetime']
+                    df.index=pd.to_datetime(df['flight_datetime'])
                     fig, ax=plt.subplots()
 
                     data=df.resample('W').sum()
